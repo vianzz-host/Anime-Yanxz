@@ -1,7 +1,7 @@
 // ==========================================
 // KONFIGURASI BINDING SERVER PTERODACTYL
 // ==========================================
-const BASE_URL = "https://lynzzofficial:2073"; // <-- GANTI DENGAN IP & PORT PANEL KAMU!
+const BASE_URL = "https://154.12.116.172:2073"; // <-- GANTI DENGAN IP & PORT PANEL KAMU!
 
 const katalogPage = document.getElementById('katalog-page');
 const detailPage = document.getElementById('detail-page');
