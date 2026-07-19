@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime By Vianzz Host</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header / Navigasi -->
+    <header>
+        <div class="logo">ANIME BY <span>VIANZZ HOST</span></div>
+    </header>
+
+    <!-- HALAMAN 1: KATALOG ANIME -->
+    <main id="katalog-page" class="page active">
+        <h2 class="section-title">Koleksi Anime</h2>
+        <div class="anime-grid" id="anime-container">
+            <!-- Data anime otomatis muncul di sini -->
+        </div>
+    </main>
+
+    <!-- HALAMAN 2: DETAIL & PLAYER -->
+    <main id="detail-page" class="page">
+        <button class="btn-back" onclick="backToKatalog()">← Kembali ke Beranda</button>
+        
+        <div class="detail-container">
+            <div class="player-section">
+                <video id="video-player" controls autoplay playsinline>
+                    <source src="" type="video/mp4">
+                    Browser Anda tidak mendukung pemutar video ini.
+                </video>
+                <h2 id="current-title">Memuat Judul...</h2>
+            </div>
+            
+            <div class="episode-section">
+                <h3>Daftar Episode</h3>
+                <div class="episode-list" id="episode-container">
+                    <!-- Daftar episode otomatis muncul di sini -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Developer -->
+    <footer>
+        Developed by <span>Vianzz Host</span>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
