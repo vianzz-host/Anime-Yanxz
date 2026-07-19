@@ -4,8 +4,8 @@
 // GANTI DENGAN URL PANEL PTERODACTYL KAMU!
 // Contoh: https://lynzz-official-2073 (tanpa port)
 // Atau: http://ip-server:3000
-const API_URL = 'https://server.lynzzofficial.com'; // Ganti dengan domain/IP panel kamu
-const API_KEY = 'ptlc_u2PHehrH1cHXkDkLrRuk8SxhJV0b2Y0aczN0KSu2us9';
+const API_URL = 'https://laskar.hostkita.help'; // Ganti dengan domain/IP panel kamu
+const API_KEY = 'ptlc_z45ZoOZveBvk2REE7GxbBOIddkwrHDkVEqE2FWOh3LN';
 
 // ==========================================
 // STATE
