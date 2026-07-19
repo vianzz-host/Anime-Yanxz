@@ -9,7 +9,7 @@ const animeData = [
         episodes: [
             { idEps: 1, eps: "Episode 01", url: "https://files.catbox.moe/wf7jvb.mp4" },
             { idEps: 2, eps: "Episode 02", url: "https://files.catbox.moe/wf7jvb.mp4" },
-            { idEps: 3, eps: "Episode 03", url: "https://pixeldrain.com/api/file/cfYG3Woz" }
+            { idEps: 3, eps: "Episode 03", url: "https://pixeldrain.com/api/file/cfYG3Woz?download" }
         ]
     },
     {
