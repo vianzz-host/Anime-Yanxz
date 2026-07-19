@@ -2,54 +2,27 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Anime By Vianzz Host</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <!-- Header / Navigasi -->
-    <header>
-        <div class="logo">ANIME BY <span>VIANZZ HOST</span></div>
-        <div class="status-badge" id="panel-status">
-            <span class="dot"></span> Connecting...
-        </div>
-    </header>
-
-    <!-- HALAMAN 1: KATALOG ANIME -->
-    <main id="katalog-page" class="page active">
-        <h2 class="section-title">Koleksi Anime</h2>
-        <div class="anime-grid" id="anime-container">
-            <!-- Data anime otomatis muncul di sini -->
-        </div>
-    </main>
-
-    <!-- HALAMAN 2: DETAIL & PLAYER -->
-    <main id="detail-page" class="page">
-        <button class="btn-back" onclick="backToKatalog()">← Kembali ke Beranda</button>
-        
-        <div class="detail-container">
-            <div class="player-section">
-                <video id="video-player" controls autoplay playsinline>
-                    <source src="" type="video/mp4">
-                    Browser Anda tidak mendukung pemutar video ini.
-                </video>
-                <h2 id="current-title">Memuat Judul...</h2>
+    <div id="app">
+        <header>
+            <div class="header-content">
+                <h1>🎌 Anime By Vianzz Host</h1>
+                <button id="backBtn" class="back-btn" style="display:none;">← Kembali</button>
             </div>
-            
-            <div class="episode-section">
-                <h3>Daftar Episode</h3>
-                <div class="episode-list" id="episode-container">
-                    <!-- Daftar episode otomatis muncul di sini -->
-                </div>
-            </div>
-        </div>
-    </main>
+        </header>
 
-    <!-- Footer Developer -->
-    <footer>
-        Developed by <span>Vianzz Host</span>
-    </footer>
+        <main id="mainContent">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Memuat data anime...</p>
+            </div>
+        </main>
+    </div>
 
     <script src="script.js"></script>
 </body>
