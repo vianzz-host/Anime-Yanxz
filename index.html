@@ -11,6 +11,9 @@
     <!-- Header / Navigasi -->
     <header>
         <div class="logo">ANIME BY <span>VIANZZ HOST</span></div>
+        <div class="status-badge" id="panel-status">
+            <span class="dot"></span> Connecting...
+        </div>
     </header>
 
     <!-- HALAMAN 1: KATALOG ANIME -->
@@ -27,12 +30,13 @@
         
         <div class="detail-container">
             <div class="player-section">
-                <video id="video-player" controls autoplay playsinline referrerpolicy="no-referrer">
+                <video id="video-player" controls autoplay playsinline>
                     <source src="" type="video/mp4">
                     Browser Anda tidak mendukung pemutar video ini.
                 </video>
                 <h2 id="current-title">Memuat Judul...</h2>
-            </div>            
+            </div>
+            
             <div class="episode-section">
                 <h3>Daftar Episode</h3>
                 <div class="episode-list" id="episode-container">
