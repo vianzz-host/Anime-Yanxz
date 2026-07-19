@@ -1,254 +1,228 @@
-// ==========================================
-// KONFIGURASI API (DIPERBAIKI)
-// ==========================================
-// PENTING: Wajib tambahkan port server kamu (misal :2073) di ujung domain!
-// Jika menggunakan IP, contoh: 'http://123.456.78.9:2073'
-const API_URL = 'https://mypanelkenji.rzhosts.my.id:11272'; 
-
+// Konfigurasi
+const PANEL_URL = 'https://mypanelkenji.rzhosts.my.id'; // Ganti dengan URL panel kamu
+const SERVER_ID = '103'; // Ganti dengan ID server di Pterodactyl
 const API_KEY = 'ptlc_PtwKh0uSkAglQz14DBqFsPrtDU3nKPQLgmeSRdXakqw';
 
-// ==========================================
-// STATE
-// ==========================================
-let animeData = [];
-let activeAnimeId = null;
-let activeEpsId = null;
+let currentView = 'home';
+let currentAnime = null;
+let currentEpisodeIndex = null;
+let animeList = [];
 
-// ==========================================
-// DOM Elements
-// ==========================================
-const katalogPage = document.getElementById('katalog-page');
-const detailPage = document.getElementById('detail-page');
-const animeContainer = document.getElementById('anime-container');
-const episodeContainer = document.getElementById('episode-container');
-const videoPlayer = document.getElementById('video-player');
-const currentTitle = document.getElementById('current-title');
-const statusBadge = document.getElementById('panel-status');
+// ============ API CALLS ============
 
-// ==========================================
-// API HELPER
-// ==========================================
-async function fetchAPI(endpoint, options = {}) {
-    const defaultOptions = {
-        headers: {
-            'x-api-key': API_KEY,
-            'Content-Type': 'application/json',
-        }
-    };
-    
-    const url = `${API_URL}${endpoint}`;
-    console.log(`🌐 Fetching: ${url}`);
-    
+// Fetch data anime dari panel
+async function fetchAnimeData() {
     try {
-        const response = await fetch(url, {
-            ...defaultOptions,
-            ...options,
-            headers: {
-                ...defaultOptions.headers,
-                ...options.headers,
-            }
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`API Error: ${response.status} - ${errorText}`);
-        }
-        
-        return await response.json();
+        // Ambil data dari endpoint API yang disediakan server.js
+        const response = await fetch(`${PANEL_URL}/api/anime`);
+        if (!response.ok) throw new Error('Gagal mengambil data');
+        const data = await response.json();
+        return data;
     } catch (error) {
-        console.error('❌ Fetch error:', error);
-        throw error;
+        console.error('Error fetching anime:', error);
+        return [];
     }
 }
 
-// ==========================================
-// CHECK PANEL STATUS
-// ==========================================
-async function checkPanelStatus() {
-    try {
-        const response = await fetch(`${API_URL}/api/status`);
-        if (response.ok) {
-            const data = await response.json();
-            statusBadge.innerHTML = `<span class="dot online"></span> Online (${data.animeCount} anime)`;
-            return true;
+// Get video URL
+function getVideoUrl(animeName, fileName) {
+    return `${PANEL_URL}/api/video/${encodeURIComponent(animeName)}/${encodeURIComponent(fileName)}`;
+}
+
+// ============ RENDER FUNCTIONS ============
+
+// Render Home
+function renderHome() {
+    currentView = 'home';
+    document.getElementById('backBtn').style.display = 'none';
+    
+    const main = document.getElementById('mainContent');
+    
+    if (animeList.length === 0) {
+        main.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">🎬</div>
+                <p>Belum ada anime</p>
+                <p style="font-size:12px;margin-top:8px;color:rgba(255,255,255,0.3);">
+                    Tambahkan via bot Telegram
+                </p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="anime-grid">';
+    animeList.forEach(anime => {
+        const thumbnailUrl = anime.thumbnail ? 
+            `${PANEL_URL}${anime.thumbnail}` : 
+            `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="169" viewBox="0 0 300 169"><rect width="300" height="169" fill="%231a1a2e"/><text x="150" y="85" font-family="Arial" font-size="20" fill="%23ff6b9d" text-anchor="middle">${anime.title}</text></svg>`;
+        
+        html += `
+            <div class="anime-card" data-anime="${anime.title}">
+                <img src="${thumbnailUrl}" alt="${anime.title}" class="anime-thumbnail" 
+                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22169%22><rect width=%22300%22 height=%22169%22 fill=%22%231a1a2e%22/><text x=%22150%22 y=%2285%22 font-family=%22Arial%22 font-size=%2220%22 fill=%22%23ff6b9d%22 text-anchor=%22middle%22>${anime.title}</text></svg>'">
+                <h3>${anime.title}</h3>
+                <div class="episode-count">${anime.episodes.length} Episode</div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    main.innerHTML = html;
+    
+    // Event listeners
+    document.querySelectorAll('.anime-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const title = card.dataset.anime;
+            const anime = animeList.find(a => a.title === title);
+            if (anime) renderAnimeDetail(anime);
+        });
+    });
+}
+
+// Render Anime Detail
+function renderAnimeDetail(anime) {
+    currentView = 'detail';
+    currentAnime = anime;
+    document.getElementById('backBtn').style.display = 'flex';
+    
+    const main = document.getElementById('mainContent');
+    const thumbnailUrl = anime.thumbnail ? 
+        `${PANEL_URL}${anime.thumbnail}` : 
+        `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="480" height="270"><rect width="480" height="270" fill="%231a1a2e"/><text x="240" y="135" font-family="Arial" font-size="24" fill="%23ff6b9d" text-anchor="middle">${anime.title}</text></svg>`;
+    
+    let html = `
+        <div style="margin-bottom:16px;">
+            <img src="${thumbnailUrl}" alt="${anime.title}" 
+                 style="width:100%;border-radius:14px;aspect-ratio:16/9;object-fit:cover;"
+                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22480%22 height=%22270%22><rect width=%22480%22 height=%22270%22 fill=%22%231a1a2e%22/><text x=%22240%22 y=%22135%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23ff6b9d%22 text-anchor=%22middle%22>${anime.title}</text></svg>'">
+            <h2 style="margin-top:12px;font-size:20px;">${anime.title}</h2>
+            <p style="color:rgba(255,255,255,0.4);font-size:14px;">${anime.episodes.length} Episode</p>
+        </div>
+        <div class="episode-list">
+    `;
+    
+    if (anime.episodes.length === 0) {
+        html += `
+            <div style="text-align:center;padding:30px 0;color:rgba(255,255,255,0.3);">
+                <p>Belum ada episode</p>
+                <p style="font-size:12px;margin-top:8px;">Tambahkan via bot Telegram</p>
+            </div>
+        `;
+    } else {
+        anime.episodes.forEach((ep, index) => {
+            html += `
+                <div class="episode-item" data-index="${index}">
+                    <div class="episode-title">${ep.title}</div>
+                    <div class="episode-duration">▶ Klik untuk putar</div>
+                </div>
+            `;
+        });
+    }
+    
+    html += '</div>';
+    main.innerHTML = html;
+    
+    document.querySelectorAll('.episode-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const index = parseInt(item.dataset.index);
+            renderVideoPlayer(anime, index);
+        });
+    });
+}
+
+// Render Video Player
+function renderVideoPlayer(anime, episodeIndex) {
+    currentView = 'player';
+    currentEpisodeIndex = episodeIndex;
+    document.getElementById('backBtn').style.display = 'flex';
+    
+    const episode = anime.episodes[episodeIndex];
+    const videoUrl = getVideoUrl(anime.title, episode.fileName);
+    
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `
+        <div class="video-container">
+            <video id="videoPlayer" controls autoplay playsinline>
+                <source src="${videoUrl}" type="video/mp4">
+                Browser tidak mendukung video.
+            </video>
+        </div>
+        <div class="video-info">
+            <h2>${episode.title}</h2>
+            <div class="anime-title">${anime.title}</div>
+        </div>
+    `;
+    
+    const video = document.getElementById('videoPlayer');
+    if (video) {
+        // Load last position
+        const lastPosition = localStorage.getItem(`lastWatch_${anime.title}_${episodeIndex}`);
+        if (lastPosition) {
+            video.currentTime = parseFloat(lastPosition);
+        }
+        
+        // Save position
+        video.addEventListener('timeupdate', () => {
+            if (!video.paused && video.currentTime > 0) {
+                localStorage.setItem(`lastWatch_${anime.title}_${episodeIndex}`, video.currentTime.toString());
+            }
+        });
+        
+        // Clear position when ended
+        video.addEventListener('ended', () => {
+            localStorage.removeItem(`lastWatch_${anime.title}_${episodeIndex}`);
+        });
+    }
+}
+
+// ============ NAVIGATION ============
+
+document.getElementById('backBtn').addEventListener('click', () => {
+    if (currentView === 'player') {
+        if (currentAnime) {
+            renderAnimeDetail(currentAnime);
         } else {
-            statusBadge.innerHTML = `<span class="dot offline"></span> Offline (${response.status})`;
-            return false;
+            renderHome();
         }
-    } catch (error) {
-        statusBadge.innerHTML = `<span class="dot offline"></span> Offline (Failed to connect)`;
-        return false;
+    } else if (currentView === 'detail') {
+        renderHome();
+    } else {
+        renderHome();
     }
-}
+});
 
-// ==========================================
-// RENDER KATALOG
-// ==========================================
-async function renderKatalog() {
-    animeContainer.innerHTML = '<div class="loading">📡 Menghubungkan ke panel...</div>';
-    
+// ============ INITIALIZE ============
+
+async function init() {
     try {
-        const result = await fetchAPI('/api/anime');
-        animeData = result.data || [];
-        
-        if (animeData.length === 0) {
-            animeContainer.innerHTML = `
-                <div class="error">
-                    ❌ Belum ada anime di database.<br>
-                    Tambahkan melalui Telegram Bot!
-                </div>
-            `;
-            return;
-        }
-        
-        const historyData = JSON.parse(localStorage.getItem('anime_history')) || {};
-        animeContainer.innerHTML = '';
-        
-        animeData.forEach(anime => {
-            const card = document.createElement('div');
-            card.className = 'anime-card';
-            
-            // Format URL thumbnail agar mengarah ke endpoint backend jika berupa path local storage panel
-            const thumbUrl = anime.thumbnail.startsWith('/anime') 
-                ? `${API_URL}${anime.thumbnail}` 
-                : anime.thumbnail;
-            
-            let historyHTML = '';
-            if (historyData[anime.id]) {
-                const h = historyData[anime.id];
-                historyHTML = `
-                    <div class="history-badge">
-                        Terakhir ditonton:<br>
-                        <b>${h.epsName} (${formatWaktu(h.time)})</b>
-                    </div>
-                `;
-            }
-            
-            card.innerHTML = `
-                <img src="${thumbUrl}" alt="${anime.judul}" loading="lazy" onerror="this.src='https://placehold.co/400x600/1f2833/66fcf1?text=${encodeURIComponent(anime.judul)}'">
-                <div class="anime-info">
-                    <h4>${anime.judul}</h4>
-                    <span style="font-size:11px;color:#66fcf1;">${anime.episodes?.length || 0} episode</span>
-                    ${historyHTML}
-                </div>
-            `;
-            card.onclick = () => openAnimeDetail(anime.id);
-            animeContainer.appendChild(card);
-        });
-        
+        const data = await fetchAnimeData();
+        animeList = data;
+        renderHome();
     } catch (error) {
-        animeContainer.innerHTML = `
-            <div class="error">
-                ❌ Gagal memuat data dari panel.<br>
-                Periksa apakah URL API atau port server di script.js sudah benar.<br><br>
-                <button onclick="renderKatalog()" style="padding:10px 20px;background:#66fcf1;color:#0b0c10;border:none;border-radius:5px;cursor:pointer;">
-                    🔄 Coba Lagi
+        console.error('Init error:', error);
+        document.getElementById('mainContent').innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">⚠️</div>
+                <p>Gagal memuat data</p>
+                <p style="font-size:12px;margin-top:8px;color:rgba(255,255,255,0.3);">
+                    Pastikan panel terhubung
+                </p>
+                <button onclick="init()" style="margin-top:16px;padding:8px 24px;background:#ff6b9d;border:none;border-radius:8px;color:#fff;font-weight:600;cursor:pointer;">
+                    Coba Lagi
                 </button>
             </div>
         `;
     }
 }
 
-// ==========================================
-// OPEN ANIME DETAIL
-// ==========================================
-function openAnimeDetail(animeId) {
-    const anime = animeData.find(a => a.id === animeId);
-    if (!anime) return alert('Anime tidak ditemukan!');
-
-    activeAnimeId = animeId;
-    katalogPage.classList.remove('active');
-    detailPage.classList.add('active');
-    episodeContainer.innerHTML = '';
-    
-    if (anime.episodes && anime.episodes.length > 0) {
-        anime.episodes.forEach(episode => {
-            const btn = document.createElement('button');
-            btn.className = 'btn-episode';
-            btn.id = `btn-eps-${episode.idEps}`;
-            btn.innerText = episode.eps;
-            
-            // Format full video URL mengarah langsung ke server panel Pterodactyl
-            const fullVideoUrl = `${API_URL}${episode.url}`;
-            btn.onclick = () => playVideo(fullVideoUrl, `${anime.judul} - ${episode.eps}`, episode.idEps, 0);
-            episodeContainer.appendChild(btn);
-        });
-        
-        // Auto-resume jika ada history streaming sebelumnya
-        const historyData = JSON.parse(localStorage.getItem('anime_history')) || {};
-        if (historyData[animeId]) {
-            const saved = historyData[animeId];
-            const targetEps = anime.episodes.find(e => e.idEps === saved.epsId);
-            if (targetEps) {
-                playVideo(`${API_URL}${targetEps.url}`, `${anime.judul} - ${targetEps.eps}`, targetEps.idEps, saved.time);
-                return;
-            }
-        }
-        
-        // Default putar episode 1
-        playVideo(`${API_URL}${anime.episodes[0].url}`, `${anime.judul} - ${anime.episodes[0].eps}`, anime.episodes[0].idEps, 0);
-    } else {
-        episodeContainer.innerHTML = '<div style="color:#666;text-align:center;padding:20px;">Belum ada episode</div>';
-        videoPlayer.src = '';
-        currentTitle.innerText = anime.judul;
+// Auto refresh setiap 30 detik
+setInterval(async () => {
+    if (currentView === 'home') {
+        const data = await fetchAnimeData();
+        animeList = data;
+        renderHome();
     }
-}
+}, 30000);
 
-// ==========================================
-// PLAY VIDEO
-// ==========================================
-function playVideo(url, title, epsId, startTime) {
-    activeEpsId = epsId;
-    document.querySelectorAll('.btn-episode').forEach(b => b.classList.remove('active'));
-    const currentBtn = document.getElementById(`btn-eps-${epsId}`);
-    if(currentBtn) currentBtn.classList.add('active');
-
-    currentTitle.innerText = title;
-    videoPlayer.src = url;
-    videoPlayer.load();
-    videoPlayer.currentTime = startTime || 0;
-    videoPlayer.play().catch(() => {});
-}
-
-// ==========================================
-// BACK TO KATALOG
-// ==========================================
-function backToKatalog() {
-    videoPlayer.pause();
-    detailPage.classList.remove('active');
-    katalogPage.classList.add('active');
-    renderKatalog();
-}
-
-// ==========================================
-// SAVE HISTORY
-// ==========================================
-videoPlayer.addEventListener('timeupdate', () => {
-    if (!activeAnimeId || !activeEpsId || videoPlayer.currentTime === 0) return;
-    const anime = animeData.find(a => a.id === activeAnimeId);
-    const episode = anime?.episodes?.find(e => e.idEps === activeEpsId);
-    
-    if (anime && episode) {
-        const historyData = JSON.parse(localStorage.getItem('anime_history')) || {};
-        historyData[activeAnimeId] = {
-            animeId: activeAnimeId,
-            epsId: activeEpsId,
-            epsName: episode.eps,
-            time: videoPlayer.currentTime
-        };
-        localStorage.setItem('anime_history', JSON.stringify(historyData));
-    }
-});
-
-function formatWaktu(detik) {
-    if (!detik || isNaN(detik)) return '0:00';
-    const m = Math.floor(detik / 60).toString().padStart(2, '0');
-    const s = Math.floor(detik % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-}
-
-window.onload = async () => {
-    await checkPanelStatus();
-    renderKatalog();
-    setInterval(checkPanelStatus, 30000);
-};
+// Start
+init();
